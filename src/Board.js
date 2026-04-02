@@ -50,6 +50,75 @@ export default class Board extends React.Component {
       status: companyDetails[3],
     }));
   }
+
+  // (New Changes): Calling after component mounts - Setting up Dragula.
+  componentDidMount() {
+    const {backlog, inProgress, complete} = this.swimlanes;
+
+
+    this.drake = Dragula([
+      backlog.current,
+      inProgress.current,
+      complete.current,
+    ])
+
+    // Fires when a card is dropped.
+    this.drake.on('drop',(el,target,source) => {
+      // Figure out which swimlane the card was dropped into.
+      const targetSwimlane = this.getSwimlaneStatus(target);
+      const sourceSwimlane = this.getSwimlaneStatus(source);
+
+      if (!targetSwimlane || targetSwimlane === sourceSwimlane) return;
+
+      this.drake.cancel(true);
+
+      const cardId = el.dataset.id;
+
+      this.setState(prevState=>{
+
+        // Finds the card in the source swinlane.
+        const card = prevState.clients[sourceSwimlane].find(c => c.id === cardId);
+        if (!card) return;
+
+        // console.log(targetSwimlane, sourceSwimlane);
+
+        // Remove from source, add to target with updated status.
+        const updateCard = {...card, status: this.getStatusFromSwimlane(targetSwimlane) };
+        return{
+          clients:{
+            ...prevState.clients,
+            [sourceSwimlane]: prevState.clients[sourceSwimlane].filter(c => c.id !== cardId),
+            [targetSwimlane]: [...prevState.clients[targetSwimlane], updateCard],
+          }
+        };
+      });
+    });
+  }
+
+  // (New Changes): Maps DOM ref => state key.
+  getSwimlaneStatus(domEl){
+    const {backlog, inProgress, complete} = this.swimlanes;
+
+    if (domEl === backlog.current) return 'backlog';
+    if (domEl === inProgress.current) return 'inProgress';
+    if (domEl === complete.current) return 'complete';
+
+    return null;
+  }
+
+
+  // (New Changes): Map state key => status string - (for card color).
+  getStatusFromSwimlane(swimlane){
+    const map = {
+      backlog: "backlog",
+      inProgress: "in-progress",
+      complete: "complete",
+    }
+
+    return map[swimlane];
+  }
+
+
   renderSwimlane(name, clients, ref) {
     return (
       <Swimlane name={name} clients={clients} dragulaRef={ref}/>

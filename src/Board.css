@@ -1,3 +1,22 @@
 .Board {
   margin-top: 12px;
 }
+
+/* Backlog = grey */
+.Card-backlog{
+  background: #d3d3d3;
+}
+
+/* In Progress = blue */
+.Card-in-progress{
+  background: #96caff;
+}
+
+/* Complete = green */
+.Card-complete{
+  background: #a3ffa9;
+}
+
+.Card{
+  cursor:grabbing;
+}
